@@ -39,14 +39,13 @@ The freed MCU pins (22, 23, 61, 62) are marked no-connect.
 
 **Schematic:** unchanged from commit 4206fce. Only the PCB changed.
 
-**Unconnected items:** 124 (4206fce) → 3. DRC with zones refilled and schematic parity: 0 footprint errors. The copper findings are the 4206fce ones minus the LED.B dangling stub, which went away when LED.B was re-routed. That leaves 22: 12 footprint-internal clearances, 9 hole clearances (incl. D1 vs BT3's peg hole), and 1 solder-mask bridge.
+**Unconnected items:** 124 (4206fce) → 2. DRC with zones refilled and schematic parity: 0 footprint errors. The copper findings are the 4206fce ones minus the LED.B dangling stub, which went away when LED.B was re-routed. That leaves 22: 12 footprint-internal clearances, 9 hole clearances (incl. D1 vs BT3's peg hole), and 1 solder-mask bridge.
 
-### Still open (3)
+### Still open (2)
 
-These are in the crowded area under U1's bottom pin row:
+Both are in the crowded area around U1's bottom pin row:
+- SPI4.SCK (U1.42 → J5.4)
 - SPI1.INT_BMP (U1.96 → U10.7). It has to come down through the area under the bottom row to reach U10.
-- GPIO PE11 (U1.41 → J11.6)
-- I2C2.SCL (U1.46 → J8.4)
 
 INT_BMP and the bottom-row nets compete for the same space. Every arrangement tried connects some of them but not all.
 
@@ -62,19 +61,23 @@ None in the 11-02 pass. Earlier, to make the crystal corner and SD lines routabl
 
 Newly connected:
 - USB_D− (U4.6 → U1.70): 0.25 mm, same as the hand-routed D+, and it follows D+ around the east and south side.
-- SPI4.SCK and SPI4.MISO (U1.42/43 → J5): they run west to J5 alongside SPI4.MOSI.
+- SPI4.MISO (U1.43 → J5.3)
+- GPIO PE11 (U1.41 → J11.6): down with the PE7–PE10 bus.
+- I2C2.SCL (U1.46 → J8.4)
 - SERVO_UART (U1.82 → R37/R38).
 - T_NRST to the debug header (J1.12). This was already open on 4206fce.
 - GPIO PE6 (U1.5 → J10.6).
 
 To make room, parts of these signal traces were re-routed:
 - T_SWO, T_VCP_TX
-- GPIO PE4, PE5, PE8, PE9
-- I2C1.SCL, I2C4.SCL, SPI4.MOSI, USART3_TARGET_RX
+- GPIO PE4, PE5, PE7, PE8, PE9
+- I2C1.SCL, I2C1.SDA, I2C4.SCL
+- SPI4.MOSI, UART8_TARGET_RX, USART3_TARGET_RX
+- SPARE_ADC1
 - BUZZER, LED.B, LED.R
 - BOOT0, PWR_STS
-- SDMMC1.D1, SDMMC1.D3
-- SPI1.CS_375, SPI1.CS_IMU_GYRO, SPI1.MOSI, SPI1.SCK, SPI2.SCK
+- SDMMC1.D0, D1, D3
+- SPI1.INT_IMU_ACC, SPI2.MOSI, SPI2.SCK
 
 The new copper is 0.2 mm with 0.6/0.3 mm vias, and clears the netclass rules: USB tracks keep 0.2032 mm.
 
