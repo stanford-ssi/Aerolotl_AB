@@ -34,3 +34,89 @@ The freed MCU pins (22, 23, 61, 62) are marked no-connect.
 
 **airlift**: U12→U11
 
+
+## PCB routing, 2026-11-01 / 11-02
+
+**Schematic:** unchanged from commit 4206fce. Only the PCB changed.
+
+**Unconnected items:** 124 (4206fce) → 4. DRC with zones refilled and schematic parity: 0 footprint errors, and the copper findings are the same 23 as on 4206fce (12 footprint-internal clearances, 9 hole clearances incl. D1 vs BT3's peg hole, 1 solder-mask bridge, the LED.B dangling stub).
+
+### Still open (4)
+
+All four are on U1's bottom pin row (pins 41–46), which is boxed in by the SPI1 and PE7–PE10 fan-out:
+- SPI4.SCK (U1.42 → J5.4) and SPI4.MISO (U1.43 → J5.3)
+- GPIO PE11 (U1.41 → J11.6)
+- I2C2.SCL (U1.46 → J8.4)
+
+### Footprints moved
+
+None in the 11-02 pass. Earlier, to make the crystal corner and SD lines routable:
+- Y1 and Y2 rotated 180°. They were mirrored relative to the pins they serve.
+- C18 and C19 swapped places, so the LSE lines don't cross.
+- C1 rotated to horizontal at (135.75, 71.55), clear of the U1 pin row.
+- R31, R33, R35 and R36 rotated 180° to open a path for SD DAT3.
+
+### 11-02: the last open signals
+
+Newly connected:
+- USB_D− (U4.6 → U1.70): 0.25 mm, same as the hand-routed D+.
+- SERVO_UART (U1.82 → R37/R38).
+- T_NRST to the debug header (J1.12). This was already open on 4206fce.
+- SPI1.INT_BMP (U10.7 → U1.96).
+- GPIO PE6 (U1.5 → J10.6).
+
+To make room, parts of these signal traces were re-routed:
+- T_SWO, T_VCP_TX
+- I2C1.SDA, I2C1.SCL, I2C2.SDA
+- SPI4.MOSI, UART8_TARGET_RX
+- GPIO PE4, PE5
+- BOOT0, PWR_STS
+- BUZZER, LED.G
+- SDMMC1.D0, D1, D3
+- SPI1.SCK, SPI1.CS_BMP
+- SPI2.MOSI, SPI2.SCK, SPI2.BUSY
+
+The new copper is 0.2 mm with 0.6/0.3 mm vias, and clears the netclass rules: USB tracks keep 0.2032 mm.
+
+USB_D+ tidy-up:
+- Removed the via at (123.70, 119.18). It only touched F.Cu, where the track already runs through.
+- Removed two duplicate vias stacked at (155.55, 66.75).
+
+### 11-01: power, servo ports, crystal corner
+
+**Servo ports (J14–J17):** fully routed.
+- Each fuse (F1–F4) drops to the +12V plane.
+- Fuse → 100 µF / 100 nF caps → connector pin 2, at 1.3 mm (0.8 mm for a few short pieces).
+- The servo bus daisy-chains J14–J17 pin 3 with D6 and R38.
+
+**Buck converter (U2):** laid out compactly.
+- **Switch node:** U2.2 → under the U2 body → over U2.1/U2.6 → L1. 0.5 mm, F.Cu only, no vias (0.4 mm where it passes under the body).
+- **Bootstrap (CB):** a short B.Cu hop under the switch node, then up beside C23 to C20.1.
+- **EN, C23 and the +12V feed:** they meet on B.Cu. VIN goes straight to C24.
+- **R9.2:** gets its GND via. It was open, which would have left the buck regulating to ~0.6 V.
+
+**BMI088 (U6) supply:** both supply pins were unrouted; they now connect to +3V3.
+- **VDD (pin 3):** gets a +3V3 via just above the pin. To make room, the GND stubs of pins 2 and 4 were re-routed to the existing GND via at (144.03, 88.60), and their two vias were removed.
+- **VDDIO (pin 11):** gets a 0.5/0.3 mm +3V3 via inside the MISO loop. To make room, SPI2.BUSY's U-turn under U6 moved 0.7 mm east (x 146.7 → 147.4, below the U6 GND via).
+
+**Crystal corner (left of U1).** As placed on 4206fce, neither crystal could be routed, and the PE2/PE3/VOLT_SENSE/T_NRST traces ran straight through the crystal area. Besides the footprint moves above:
+- **HSE** (HS_OSC_A/B): F.Cu only, no vias. U1.12/13 → Y1 → C14/C15.
+- **LSE** (LS_OSC_A/B): F.Cu only, no vias. U1.8/9 go up through the gap between C8 and C3 → Y2 → C19/C18.
+- **PE2, PE3, VOLT_SENSE:** now go around the crystals instead of through them.
+  - They drop to B.Cu next to C8 and run west in the band between SDMMC1.D3 and BOOT0.
+  - Then they run down alongside BOOT0, three lanes 0.6 mm apart, and hop over I2C1.SCL on F.Cu beside SW2.
+  - Each lands on its original copper: VOLT_SENSE via (124.75, 75.20), PE2 via (127.95, 78.40), and PE3 on its original diagonal at (128.58, 80.73).
+- **T_NRST:** U1.14/C1.1 rejoin the under-chip B.Cu run with a new via at (137.05, 70.65). R1.2 hops on B.Cu under the crystals to the via at (126.60, 61.70) and to SW2's via (121.35, 68.05).
+- **Plane fan-outs:**
+  - C3.1 (+3V3) connects straight to U1.11 instead of through a via.
+  - The GND vias of C3.2, C14.2 and C18.2 moved slightly.
+  - The old C1 GND via at (136.65, 70.12) was removed.
+
+**Also routed on 11-01:** SPI1.MOSI (U1.31), SPI1.CS_IMU_ACC (U1.84 → U6.14), SD CARD_DAT3, the +12V feed to U2.3, I2C4.SCL and BUZZER.
+
+**Widths follow the netclasses:**
+- **PWR_HI:** +BATT 2.0 mm. +12V 2.0/1.0 mm, and 0.5 mm on the buck-input branch, with a 0.3 mm neck at U2.3 (well under 1 A).
+- **PWR_LO:** 0.5 mm. It necks to 0.3/0.2 mm only at fine-pitch pins (U5 SOT-583, U4 SOT-666, U1); +3.3VA has 0.2/0.3 mm sections.
+- **GND/+3V3 plane fan-outs:** 0.25 mm, like the existing stubs.
+- **Signals:** 0.2 mm, except a 0.15 mm neck on 2 short BUZZER pieces at U1.67, next to a via.
+- **Vias:** 0.6/0.3, and 0.8/0.4 on PWR_HI.
